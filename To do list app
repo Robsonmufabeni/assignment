@@ -1,0 +1,113 @@
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, Circle, Trash2 } from "lucide-react";
+
+export default function TodoApp() {
+  const [todos, setTodos] = useState(() => {
+    const saved = localStorage.getItem("todos");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [input, setInput] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
+  const addTodo = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setTodos([...todos, { id: Date.now(), text: input.trim(), done: false }]);
+    setInput("");
+  };
+
+  const toggleTodo = (id) =>
+    setTodos(
+      todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
+
+  const deleteTodo = (id) =>
+    setTodos(todos.filter((t) => t.id !== id));
+
+  const filteredTodos = todos.filter((t) =>
+    filter === "active" ? !t.done : filter === "completed" ? t.done : true
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6"
+      >
+        <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">
+          📝 To-Do List
+        </h1>
+
+        <form onSubmit={addTodo} className="flex gap-2 mb-4">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Add a new task..."
+            className="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+          />
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Add
+          </button>
+        </form>
+
+        <div className="flex justify-center gap-2 mb-4">
+          {["all", "active", "completed"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                filter === f
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              {f[0].toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <ul className="space-y-2">
+          {filteredTodos.map((todo) => (
+            <motion.li
+              key={todo.id}
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between bg-gray-50 p-2 rounded-lg shadow-sm"
+            >
+              <button onClick={() => toggleTodo(todo.id)} className="mr-2">
+                {todo.done ? (
+                  <CheckCircle2 className="text-green-500" />
+                ) : (
+                  <Circle className="text-gray-400" />
+                )}
+              </button>
+              <span
+                className={`flex-grow ${
+                  todo.done ? "line-through text-gray-400" : "text-gray-800"
+                }`}
+              >
+                {todo.text}
+              </span>
+              <button
+                onClick={() => deleteTodo(todo.id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <Trash2 />
+              </button>
+            </motion.li>
+          ))}
+        </ul>
+      </motion.div>
+    </div>
+  );
+}
